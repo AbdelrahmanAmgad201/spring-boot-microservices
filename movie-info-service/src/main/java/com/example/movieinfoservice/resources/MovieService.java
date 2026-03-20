@@ -13,16 +13,40 @@ public class MovieService {
     @Value("${api.key}")
     private String apiKey;
 
-    private RestTemplate restTemplate;
+    @Value("${cache.enabled}")
+    private boolean cacheEnabled;
 
-    public MovieService(RestTemplate restTemplate){
+    private final RestTemplate restTemplate;
+    private final MovieCacheRepository movieCacheRepository;
+
+    public MovieService(RestTemplate restTemplate, MovieCacheRepository movieCacheRepository) {
         this.restTemplate = restTemplate;
+        this.movieCacheRepository = movieCacheRepository;
     }
 
     @Nullable
     public MovieSummary getMovieSummary(String movieId) {
+
+        if (cacheEnabled) {
+            MovieCacheEntity cached = movieCacheRepository.findById(movieId).orElse(null);
+            if (cached != null) {
+                MovieSummary summary = new MovieSummary();
+                summary.setId(cached.getMovieId());
+                summary.setTitle(cached.getTitle());
+                summary.setOverview(cached.getOverview());
+                return summary;
+            }
+        }
+
         final String url = "https://api.themoviedb.org/3/movie/" + movieId + "?api_key=" + apiKey;
         MovieSummary movieSummary = restTemplate.getForObject(url, MovieSummary.class);
+
+        if (cacheEnabled && movieSummary != null) {
+            movieCacheRepository.save(
+                    new MovieCacheEntity(movieId, movieSummary.getTitle(), movieSummary.getOverview())
+            );
+        }
+
         return movieSummary;
     }
 }
