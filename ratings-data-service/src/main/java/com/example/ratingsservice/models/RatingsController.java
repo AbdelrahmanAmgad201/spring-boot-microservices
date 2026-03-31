@@ -38,7 +38,7 @@ public class RatingsController {
     public Rating saveRating(
             @PathVariable int userId,
             @RequestBody Rating rating) {
-        return ratingsService.saveRating(userId, rating.getMovieId(), rating.getRating());
+        return ratingsService.saveRating(userId, rating.getMovieId(), rating.getMovieName(), rating.getRating());
     }
 
     // DELETE /ratingsdata/{userId}/{movieId}  → remove a rating

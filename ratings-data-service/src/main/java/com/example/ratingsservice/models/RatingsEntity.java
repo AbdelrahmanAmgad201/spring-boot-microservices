@@ -21,14 +21,18 @@ public class RatingsEntity {
     @Column(name = "movie_id", nullable = false)
     private String movieId;
 
+    @Column(name = "movie_name")
+    private String movieName;
+
     @Column(name = "rating", nullable = false)
     private int rating;
 
 
-    public RatingsEntity(int userId, Long id, String movieId, int rating) {
+    public RatingsEntity(int userId, Long id, String movieId, String movieName, int rating) {
         this.userId = userId;
         this.id = id;
         this.movieId = movieId;
+        this.movieName = movieName;
         this.rating = rating;
     }
 
@@ -58,6 +62,14 @@ public class RatingsEntity {
 
     public void setMovieId(String movieId) {
         this.movieId = movieId;
+    }
+
+    public String getMovieName() {
+        return movieName;
+    }
+
+    public void setMovieName(String movieName) {
+        this.movieName = movieName;
     }
 
     public int getRating() {
