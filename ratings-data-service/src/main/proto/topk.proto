@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+package com.example.ratingsservice;
+
+service getTopK{
+  rpc getTopK(Request) returns (Reply){};
+}
+
+message Request{
+  int32 k = 1;
+}
+
+message TopKMovies{
+  string movieId = 1;
+  double rating = 3;
+}
+
+message Reply{
+  repeated TopKMovies list = 1;
+}

@@ -1,12 +1,11 @@
-package com.example.ratingsservice.models;
+package com.example.ratingsservice.dto;
 
 import java.util.List;
 
 public class UserRating {
     private List<Rating> ratings;
 
-    public UserRating() {
-    }
+    public UserRating() {}
 
     public UserRating(List<Rating> ratings) {
         this.ratings = ratings;
