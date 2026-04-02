@@ -1,6 +1,6 @@
-package com.example.ratingsservice.config;
+package com.example.trendingservice.config;
 
-import com.example.ratingsservice.grpc.TopKService;
+import com.example.trendingservice.grpc.TrendingMoviesGrpcService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
@@ -17,26 +17,25 @@ public class GrpcServerConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcServerConfig.class);
 
-    @Value("${grpc.server.port:9083}")
+    @Value("${grpc.server.port:9084}")
     private int grpcPort;
 
-    private final TopKService topKService;
+    private final TrendingMoviesGrpcService trendingMoviesGrpcService;
     private Server server;
 
-    public GrpcServerConfig(TopKService topKService) {
-        this.topKService = topKService;
+    public GrpcServerConfig(TrendingMoviesGrpcService trendingMoviesGrpcService) {
+        this.trendingMoviesGrpcService = trendingMoviesGrpcService;
     }
 
     @PostConstruct
     public void startGrpcServer() {
         try {
             server = ServerBuilder.forPort(grpcPort)
-                    .addService(topKService)
+                    .addService(trendingMoviesGrpcService)
                     .build()
                     .start();
-            logger.info("gRPC server started on port {}", grpcPort);
+            logger.info("Trending Movies gRPC server started on port {}", grpcPort);
 
-            // Await termination in a daemon thread so it doesn't block shutdown
             Thread daemonThread = new Thread(() -> {
                 try {
                     server.awaitTermination();
@@ -47,7 +46,7 @@ public class GrpcServerConfig {
             daemonThread.setDaemon(true);
             daemonThread.start();
         } catch (IOException e) {
-            logger.error("Failed to start gRPC server on port {}", grpcPort, e);
+            logger.error("Failed to start Trending Movies gRPC server on port {}", grpcPort, e);
             throw new RuntimeException("Failed to start gRPC server", e);
         }
     }
@@ -55,7 +54,7 @@ public class GrpcServerConfig {
     @PreDestroy
     public void stopGrpcServer() {
         if (server != null) {
-            logger.info("Shutting down gRPC server on port {}", grpcPort);
+            logger.info("Shutting down Trending Movies gRPC server on port {}", grpcPort);
             server.shutdown();
         }
     }

@@ -5,7 +5,6 @@ import com.example.ratingsservice.Request;
 import com.example.ratingsservice.getTopKGrpc;
 import com.example.ratingsservice.dto.TopKMovies;
 import com.example.ratingsservice.service.RatingsService;
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +19,6 @@ public class TopKService extends getTopKGrpc.getTopKImplBase {
     public TopKService(RatingsService ratingsService) {
         this.ratingsService = ratingsService;
     }
-
-
 
     @Override
     public void getTopK(Request request, StreamObserver<Reply> responseObserver) {
@@ -42,15 +39,10 @@ public class TopKService extends getTopKGrpc.getTopKImplBase {
 
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
-        } catch (IllegalArgumentException e) {
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription(e.getMessage())
-                    .asRuntimeException());
+        } catch (NumberFormatException e) {
+            responseObserver.onError(new IllegalArgumentException("Invalid movie ID format: " + e.getMessage()));
         } catch (Exception e) {
-            responseObserver.onError(Status.INTERNAL
-                    .withDescription("Failed to fetch top K movies")
-                    .withCause(e)
-                    .asRuntimeException());
+            responseObserver.onError(new RuntimeException("Failed to fetch top K movies: " + e.getMessage()));
         }
     }
 
