@@ -1,0 +1,230 @@
+version: "3.9"
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  mongodb-data:
+
+services:
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Infrastructure: MySQL
+  # ─────────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ratings_db
+      MYSQL_USER: abdelrahman
+      MYSQL_PASSWORD: 123456
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "abdelrahman", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Infrastructure: MongoDB
+  # ─────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Layer 1: Eureka Discovery Server
+  # ─────────────────────────────────────────────────────────────────
+  discovery-server:
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: discovery-server
+    environment:
+      EUREKA_HOSTNAME: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-net
+    restart: on-failure
+    healthcheck:
+      # Eureka has no actuator; check the web UI root
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/ > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 384M
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Layer 2: Ratings Data Service  (REST :8083 | gRPC :9083 internal)
+  # ─────────────────────────────────────────────────────────────────
+  ratings-data-service:
+    build:
+      context: ./ratings-data-service
+      dockerfile: Dockerfile
+    container_name: ratings-data-service
+    environment:
+      EUREKA_URL: http://discovery-server:8761/eureka
+      MYSQL_HOST: mysql
+      MYSQL_DB: ratings_db
+      MYSQL_USER: abdelrahman
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "8083:8083"
+      # gRPC port 9083 is internal-only; NOT exposed to host
+    networks:
+      - microservices-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/ratings/1 > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Layer 2: Movie Info Service  (REST :8082)
+  # ─────────────────────────────────────────────────────────────────
+  movie-info-service:
+    build:
+      context: ./movie-info-service
+      dockerfile: Dockerfile
+    container_name: movie-info-service
+    environment:
+      EUREKA_URL: http://discovery-server:8761/eureka
+      MONGODB_URI: mongodb://mongodb:27017/movieinfo
+      TMDB_API_KEY: b0af84324ea41ca39f4311c9156e94e3
+      CACHE_ENABLED: "true"
+    ports:
+      - "8082:8082"
+    networks:
+      - microservices-net
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/movies/550 > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Layer 3: Trending Movies Service  (REST :8084 | gRPC :9084 internal)
+  # ─────────────────────────────────────────────────────────────────
+  trending-movies-service:
+    build:
+      context: ./trending-movies-service
+      dockerfile: Dockerfile
+    container_name: trending-movies-service
+    environment:
+      EUREKA_URL: http://discovery-server:8761/eureka
+      RATINGS_GRPC_HOST: ratings-data-service
+    ports:
+      - "8084:8084"
+      # gRPC port 9084 is internal-only; NOT exposed to host
+    networks:
+      - microservices-net
+    depends_on:
+      ratings-data-service:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      # Trending service has no meaningful REST endpoint of its own; check that the port is up
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/ > /dev/null 2>&1 || exit 0"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ─────────────────────────────────────────────────────────────────
+  #  Layer 4: Movie Catalog Service  (REST :8081) — entry point
+  # ─────────────────────────────────────────────────────────────────
+  movie-catalog-service:
+    build:
+      context: ./movie-catalog-service
+      dockerfile: Dockerfile
+    container_name: movie-catalog-service
+    environment:
+      EUREKA_URL: http://discovery-server:8761/eureka
+      TRENDING_GRPC_HOST: trending-movies-service
+    ports:
+      - "8081:8081"
+    networks:
+      - microservices-net
+    depends_on:
+      trending-movies-service:
+        condition: service_healthy
+      movie-info-service:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health 2>/dev/null | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
