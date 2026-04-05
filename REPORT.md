@@ -252,10 +252,35 @@ Best real-world solution:
 
 # Part D
 
+| Test Type        | Service     | Concurrent Users | Loop Count | Total Requests | Notes                                 |
+| ---------------- | ----------- | ---------------- | ---------- | -------------- | ------------------------------------- |
+| Performance Test | Ratings API | 5                | 500        | 2,500          | Moderate write load to seed ratings   |
+| Performance Test | Catalog API | 10               | 1000       | 10,000         | Read-heavy test with service chaining |
+| Stress Test      | Ratings API | 10           | 500    | 5,000      | Increase until latency/error spikes   |
+| Stress Test      | Catalog API | 15           | 1000    | 15,000         | Observe Hystrix fallback behavior     |
 
-* Latency distribution
-* Throughput
-* Max requests before failure
-* Comparison before/after caching
 
+### Performance Test
+
+- **Summary:**  
+  ![Cache - Summary](assets/part_d/sys_perf_summary.png)
+- **Latency Percentiles:**  
+  ![Cache - Latency Percentiles](assets/part_d/sys_perf_latency.png)
+- **Throughput:**  
+  ![Cache - Throughput](assets/part_d/sys_perf_throughput.png)
+
+
+### Stress Test
+
+- **Summary:**  
+  ![Cache - Summary](assets/part_d/sys_stress_summary.png)
+- **Latency Percentiles:**  
+  ![Cache - Latency Percentiles](assets/part_d/sys_stress_latency.png)
+- **Throughput:**  
+  ![Cache - Throughput](assets/part_d/sys_stress_throughput.png)
+
+## Repositery:
+```link
+https://github.com/AbdelrahmanAmgad201/spring-boot-microservices#
+```
 ---

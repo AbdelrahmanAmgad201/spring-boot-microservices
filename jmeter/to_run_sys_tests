@@ -1,0 +1,5 @@
+./jmeter -n -t system_performance_test.jmx -l system_performance_results.jtl -e -o sys_perf_results
+
+./jmeter -n -t system_stress_test.jmx -l system_stress_results.jtl -e -o sys_stress_results
+
+
