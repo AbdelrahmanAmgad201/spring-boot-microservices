@@ -56,6 +56,9 @@ services:
     deploy:
       resources:
         limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
           cpus: "0.5"
           memory: 512M
 
@@ -136,7 +139,12 @@ services:
       EUREKA_URL: http://discovery-server:8761/eureka
       MONGODB_URI: mongodb://mongodb:27017/movieinfo
       TMDB_API_KEY: b0af84324ea41ca39f4311c9156e94e3
-      CACHE_ENABLED: "true"
+      CACHE_ENABLED: "false"
+      # Belt-and-suspenders: also set via env so any JVM launch script picks it up
+      JAVA_TOOL_OPTIONS: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
+        -XX:InitialRAMPercentage=50.0
     ports:
       - "8082:8082"
     networks:
@@ -156,8 +164,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 512M
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "1.0"
+          memory: 1G
 
   # ─────────────────────────────────────────────────────────────────
   #  Layer 3: Trending Movies Service  (REST :8084 | gRPC :9084 internal)

@@ -12,4 +12,8 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 # Expose REST port and gRPC server port
 EXPOSE 8084 9084
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", \
+            "-XX:+UseContainerSupport", \
+            "-XX:MaxRAMPercentage=75.0", \
+            "-XX:InitialRAMPercentage=50.0", \
+            "-jar", "app.jar"]
