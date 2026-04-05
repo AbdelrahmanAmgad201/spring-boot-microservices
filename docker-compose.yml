@@ -87,9 +87,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.3"
-          memory: 384M
-
+          cpus: "1.0"
+          memory: 1G
+          
   # ─────────────────────────────────────────────────────────────────
   #  Layer 2: Ratings Data Service  (REST :8083 | gRPC :9083 internal)
   # ─────────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ services:
       EUREKA_URL: http://discovery-server:8761/eureka
       MONGODB_URI: mongodb://mongodb:27017/movieinfo
       TMDB_API_KEY: b0af84324ea41ca39f4311c9156e94e3
-      CACHE_ENABLED: "false"
+      CACHE_ENABLED: "true"
       # Belt-and-suspenders: also set via env so any JVM launch script picks it up
       JAVA_TOOL_OPTIONS: >-
         -XX:+UseContainerSupport
