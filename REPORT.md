@@ -1,4 +1,3 @@
-
 # Report – Microservices & Performance Testing Lab
 
 ## Part A – Ratings Service Storage Model (MySQL)
@@ -163,6 +162,37 @@ Example MongoDB document:
 
 ---
 
+### Performance Comparison: With and Without Caching
+
+Below are the JMeter performance test results for the Movie Info Service endpoint `/movies/{movieId}`:
+
+#### Without Cache
+
+- **Summary:**  
+  ![No Cache - Summary](assets/part_b/no_cache_data.png)
+- **Latency Percentiles:**  
+  ![No Cache - Latency Percentiles](assets/part_b/no_cache_percentiles.png)
+- **Throughput:**  
+  ![No Cache - Throughput](assets/part_b/no_cache_throughput.png)
+
+#### With MongoDB Cache
+
+- **Summary:**  
+  ![Cache - Summary](assets/part_b/cache_data.png)
+- **Latency Percentiles:**  
+  ![Cache - Latency Percentiles](assets/part_b/cache_percentiles.png)
+- **Throughput:**  
+  ![Cache - Throughput](assets/part_b/cache_throughput.png)
+
+**Comparison:**
+
+- **Average Latency:** Significantly reduced after enabling cache.
+- **P90 Latency:** Lower with cache, indicating more consistent response times.
+- **Throughput:** Higher with cache, as the service can handle more requests per second.
+- **External API Calls:** Reduced drastically with cache enabled, lowering dependency on the MovieDB API.
+
+---
+
 # Part C – Trending Movies Service (gRPC)
 
 ### Service Purpose
@@ -222,7 +252,6 @@ Best real-world solution:
 
 # Part D
 
-include:
 
 * Latency distribution
 * Throughput
@@ -230,36 +259,3 @@ include:
 * Comparison before/after caching
 
 ---
-
-## Final Report Structure
-
-```
-1. Introduction
-2. Part A – Ratings Service Storage Model
-   2.1 Design Choice
-   2.2 RDBMS vs NoSQL
-   2.3 MySQL Schema
-3. Part B – Caching with MongoDB
-   3.1 Why Caching
-   3.2 Where Caching Matters
-   3.3 MongoDB Schema
-   3.4 Cache Flow
-   3.5 Performance Improvement
-4. Part C – Trending Movies Service
-   4.1 Architecture
-   4.2 gRPC Communication
-   4.3 Data Source Discussion
-   4.4 Performance Improvements
-5. Part D – JMeter Performance Testing
-   5.1 Test Setup
-   5.2 Performance Test Results
-   5.3 Stress Test Results
-   5.4 Latency Distribution
-   5.5 Throughput
-   5.6 Maximum Requests Before Failure
-6. Conclusion
-```
-
----
-
-If you want, next I can help you write **Part D (JMeter results + how to present charts + what to conclude)** which is usually the most important part of the report.
